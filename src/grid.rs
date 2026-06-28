@@ -1,13 +1,14 @@
+use crate::H;
 use std::ops::{Index, IndexMut};
 use std::thread;
 
 pub struct Grid<T>
 where
-    T: Send + Sync,
+    T: Send + Sync + Copy + Default,
 {
     pub vec: Vec<T>,
     pub width: usize,
-    pub heigth: usize,
+    pub height: usize,
     pub count: usize,
 }
 pub struct GridPosition {
@@ -31,17 +32,14 @@ pub const NEIGHBOUR_OFFSETS: [GridOffset; 8] = [
 
 impl<T> Grid<T>
 where
-    T: Send + Sync,
+    T: Send + Sync + Copy + Default,
 {
-    pub fn new(width: usize, heigth: usize) -> Self
-    where
-        T: Clone + Default,
-    {
-        let count = width * heigth;
+    pub fn new(width: usize, height: usize) -> Self {
+        let count = width * height;
         Self {
             vec: vec![T::default(); count],
             width,
-            heigth,
+            height,
             count,
         }
     }
@@ -83,7 +81,7 @@ where
         let new_col = col as isize + offset.col;
 
         if new_row >= 0
-            && new_row < self.heigth as isize
+            && new_row < self.height as isize
             && new_col >= 0
             && new_col < self.width as isize
         {
@@ -100,11 +98,27 @@ where
             value: row * self.width + col,
         }
     }
+
+    pub fn load_grid(&mut self, vec: Vec<Vec<T>>, origin_position: GridPosition) {
+        for (x_off, row) in vec.iter().enumerate() {
+            for (y_off, cell) in row.iter().enumerate() {
+                let offset = GridOffset {
+                    row: x_off as isize,
+                    col: y_off as isize,
+                };
+                let new_pos = self.add_offset_to_position(&origin_position, &offset);
+                match new_pos {
+                    Some(new) => self[new] = *cell,
+                    _ => (),
+                }
+            }
+        }
+    }
 }
 
 impl<T> Index<GridPosition> for Grid<T>
 where
-    T: Send + Sync,
+    T: Send + Sync + Copy + Default,
 {
     type Output = T;
 
@@ -115,7 +129,7 @@ where
 
 impl<T> IndexMut<GridPosition> for Grid<T>
 where
-    T: Send + Sync,
+    T: Send + Sync + Copy + Default,
 {
     fn index_mut(&mut self, index: GridPosition) -> &mut Self::Output {
         &mut self.vec[index.value]

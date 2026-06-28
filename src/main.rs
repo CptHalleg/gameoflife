@@ -1,5 +1,7 @@
 mod grid;
+mod parsing;
 use crate::grid::NEIGHBOUR_OFFSETS;
+use crate::parsing::parse_chars;
 use crossterm::cursor::MoveTo;
 use crossterm::event::poll;
 use crossterm::event::{Event, KeyCode, KeyModifiers, read};
@@ -7,6 +9,8 @@ use crossterm::terminal::*;
 use crossterm::*;
 use grid::Grid;
 use grid::GridPosition;
+use std::env;
+use std::fs;
 use std::io::Write;
 use std::io::stdout;
 use std::thread;
@@ -21,67 +25,21 @@ fn main() {
     let mut current_grid: Grid<bool> = Grid::new(W, H);
     let mut new_grid: Grid<bool> = Grid::new(W, H);
 
-    let pulsar = [
-        (-6, -4),
-        (-6, -3),
-        (-6, -2),
-        (-4, -6),
-        (-3, -6),
-        (-2, -6),
-        (-4, -1),
-        (-3, -1),
-        (-2, -1),
-        (-4, 1),
-        (-3, 1),
-        (-2, 1),
-        (-1, -4),
-        (-1, -3),
-        (-1, -2),
-        (1, -4),
-        (1, -3),
-        (1, -2),
-        (2, -6),
-        (3, -6),
-        (4, -6),
-        (2, -1),
-        (3, -1),
-        (4, -1),
-        (2, 1),
-        (3, 1),
-        (4, 1),
-        (4, 6),
-        (3, 6),
-        (2, 6),
-        (6, -4),
-        (6, -3),
-        (6, -2),
-        (-6, 2),
-        (-6, 3),
-        (-6, 4),
-        (-4, 6),
-        (-3, 6),
-        (-2, 6),
-        (-1, 4),
-        (-1, 3),
-        (-1, 2),
-        (1, 4),
-        (1, 3),
-        (1, 2),
-        (2, 6),
-        (3, 6),
-        (4, 6),
-    ];
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        eprintln!("Usage: {} <filename>", args[0]);
+        return;
+    }
 
-    //delta 35.45958638191223
-    //delta 3.9695897102355957
+    let filename = &args[1];
+    let contents = fs::read_to_string(filename).expect("Failed to read file");
+    let parsed = parse_chars(&contents).unwrap_or_else(|err| {
+        panic!("parsing failed: {}", err);
+    });
+    let load_pos = current_grid.create_position(0, 0);
+    current_grid.load_grid(parsed, load_pos);
 
-    set_pattern(&mut current_grid, 10, 10, &pulsar);
-
-    let glider = [(0, 1), (1, 2), (2, 0), (2, 1), (2, 2)];
-
-    set_pattern(&mut current_grid, 5, 5, &glider);
     let frame_time = Duration::from_millis(100);
-
     enable_raw_mode().unwrap();
     execute!(stdout(), EnterAlternateScreen).unwrap();
     loop {
@@ -156,20 +114,6 @@ fn update_grid(pos: GridPosition, old_grid: &Grid<bool>) -> bool {
         }
     }
     update_cell(old_grid[pos], count)
-}
-
-fn set_pattern(
-    grid: &mut Grid<bool>,
-    origin_row: usize,
-    origin_col: usize,
-    offsets: &[(isize, isize)],
-) {
-    for &(dr, dc) in offsets {
-        let row = (origin_row as isize + dr) as usize;
-        let col = (origin_col as isize + dc) as usize;
-        let pos = grid.create_position(row, col);
-        grid[pos] = true;
-    }
 }
 
 fn update_cell(current_value: bool, neighbours: u8) -> bool {
