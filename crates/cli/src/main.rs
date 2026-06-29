@@ -1,13 +1,8 @@
-use crate::conway::ConwayAutomaton;
-use crate::grid::ORIGIN_POSITION;
-use crate::simulation::Simulation;
+use core::conway::ConwayAutomaton;
+use core::grid::ORIGIN_POSITION;
+use core::simulation::Simulation;
 use std::env;
 use std::fs;
-
-mod conway;
-mod grid;
-mod parsing;
-mod simulation;
 
 fn main() {
     let h: usize = 50;
