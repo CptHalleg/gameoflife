@@ -3,6 +3,7 @@ use core::grid::ORIGIN_POSITION;
 use core::simulation::Simulation;
 use std::env;
 use std::fs;
+use std::io::stdout;
 
 fn main() {
     let h: usize = 50;
@@ -18,9 +19,10 @@ fn main() {
     let filename = &args[1];
     let contents = fs::read_to_string(filename).expect("Failed to read file");
 
+    let mut out = stdout();
     let mut simulation = Simulation::new(w, h, automation);
     simulation.parse_string(&contents, ORIGIN_POSITION);
-    simulation.simulate_loop();
+    simulation.simulate_loop(&mut out);
     println!("end state:");
-    simulation.print();
+    simulation.print(&mut out);
 }

@@ -46,7 +46,7 @@ where
         self.grid.load_grid(vec, pos);
     }
 
-    pub fn simulate_loop(&mut self) {
+    pub fn simulate_loop(&mut self, out: &mut Stdout) {
         let mut old_grid: Grid<T> = self.grid.clone();
 
         let frame_time = Duration::from_millis(100);
@@ -59,7 +59,7 @@ where
 
             Self::update_chunks(&mut self.grid, &old_grid, 16, &self.automaton);
             execute!(stdout(), Clear(ClearType::All), MoveTo(0, 0)).unwrap();
-            self.print();
+            self.print(out);
             std::mem::swap(&mut self.grid, &mut old_grid);
 
             if poll(Duration::from_millis(0)).unwrap() {
@@ -83,8 +83,7 @@ where
         println!("calm down!")
     }
 
-    pub fn print(&self) {
-        let mut out = stdout();
+    pub fn print(&self, out: &mut Stdout) {
         if true {
             write!(out, "|").unwrap();
             for _ in 0..self.grid.width {
@@ -95,7 +94,7 @@ where
                     write!(out, "|\r\n|").unwrap();
                 }
 
-                self.automaton.print_cell(&mut out, self.grid.vec[pos]);
+                self.automaton.print_cell(out, self.grid.vec[pos]);
             }
             write!(out, "|\r\n|").unwrap();
             for _ in 0..self.grid.width {
@@ -103,7 +102,7 @@ where
             }
             write!(out, "|").unwrap();
         }
-        write!(out, "|\r\n|").unwrap();
+        write!(out, "\r\n").unwrap();
         stdout().flush().unwrap();
     }
 
