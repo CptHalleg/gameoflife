@@ -1,7 +1,6 @@
-use crate::H;
 use std::ops::{Index, IndexMut};
-use std::thread;
 
+#[derive(Clone)]
 pub struct Grid<T>
 where
     T: Send + Sync + Copy + Default,
@@ -44,31 +43,6 @@ where
         }
     }
 
-    pub fn update_chunks(
-        new_grid: &mut Grid<T>,
-        old_grid: &Grid<T>,
-        chunk_count: usize,
-        update: fn(GridPosition, &Grid<T>) -> T,
-    ) {
-        let chunk_size = new_grid.count / chunk_count;
-
-        thread::scope(|s| {
-            for (chunk_index, chunk) in new_grid.vec.chunks_mut(chunk_size).enumerate() {
-                s.spawn(move || {
-                    let chunk_start_pos = chunk_index * chunk_size;
-                    for (cell_index, x) in chunk.iter_mut().enumerate() {
-                        *x = update(
-                            GridPosition {
-                                value: chunk_start_pos + cell_index,
-                            },
-                            old_grid,
-                        );
-                    }
-                });
-            }
-        });
-    }
-
     pub fn add_offset_to_position(
         &self,
         position: &GridPosition,
@@ -93,9 +67,14 @@ where
         }
     }
 
-    pub fn create_position(&self, row: usize, col: usize) -> GridPosition {
-        GridPosition {
-            value: row * self.width + col,
+    pub fn create_position(&self, row: usize, col: usize) -> Option<GridPosition> {
+        self.create_position_index(row * self.width + col)
+    }
+    pub fn create_position_index(&self, index: usize) -> Option<GridPosition> {
+        if index < self.count {
+            Some(GridPosition { value: index })
+        } else {
+            None
         }
     }
 
