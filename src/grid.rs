@@ -28,6 +28,7 @@ pub const NEIGHBOUR_OFFSETS: [GridOffset; 8] = [
     GridOffset { row: 1, col: 0 },
     GridOffset { row: 1, col: 1 },
 ];
+pub const ORIGIN_POSITION: GridPosition = GridPosition { value: 0 };
 
 impl<T> Grid<T>
 where
@@ -70,6 +71,7 @@ where
     pub fn create_position(&self, row: usize, col: usize) -> Option<GridPosition> {
         self.create_position_index(row * self.width + col)
     }
+
     pub fn create_position_index(&self, index: usize) -> Option<GridPosition> {
         if index < self.count {
             Some(GridPosition { value: index })

@@ -33,8 +33,17 @@ where
         }
     }
 
-    pub fn init_grid(&mut self) {
-        self.automaton.init_grid(&mut self.grid);
+    pub fn parse_string(&mut self, string: &str, pos: GridPosition) {
+        let vec: Vec<Vec<T>> = string
+            .lines()
+            .map(|line| {
+                line.chars()
+                    .map(|ch| self.automaton.parse_char(&ch))
+                    .collect()
+            })
+            .collect();
+
+        self.grid.load_grid(vec, pos);
     }
 
     pub fn simulate_loop(&mut self) {
@@ -86,7 +95,7 @@ where
                     write!(out, "|\r\n|").unwrap();
                 }
 
-                self.automaton.print(&mut out, self.grid.vec[pos]);
+                self.automaton.print_cell(&mut out, self.grid.vec[pos]);
             }
             write!(out, "|\r\n|").unwrap();
             for _ in 0..self.grid.width {
@@ -111,7 +120,7 @@ where
                 s.spawn(move || {
                     let chunk_start_pos = chunk_index * chunk_size;
                     for (cell_index, x) in chunk.iter_mut().enumerate() {
-                        *x = automaton.update_grid(
+                        *x = automaton.update_cell(
                             old_grid
                                 .create_position_index(chunk_start_pos + cell_index)
                                 .unwrap(),
@@ -129,7 +138,7 @@ where
     T: Send + Sync + Copy + Default,
     Self: Sync,
 {
-    fn print(&self, out: &mut Stdout, value: T);
-    fn init_grid(&self, grid: &mut Grid<T>);
-    fn update_grid(&self, pos: GridPosition, old_grid: &Grid<T>) -> T;
+    fn print_cell(&self, out: &mut Stdout, value: T);
+    fn parse_char(&self, ch: &char) -> T;
+    fn update_cell(&self, pos: GridPosition, old_grid: &Grid<T>) -> T;
 }
